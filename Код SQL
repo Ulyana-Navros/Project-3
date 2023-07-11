@@ -1,0 +1,62 @@
+-- select    count (*) as cnt
+--         , is_trial
+--         , name_partner
+-- from    (select *
+--          from
+--                 (select a.*
+--                      , name_partner
+--                      , row_number() over (order by date_purchase asc) as rn_all
+--                      , row_number() over (partition by user_id order by date_purchase asc) as rn_user
+
+--                 from skycinema.client_sign_up a
+--                     left join skycinema.partner_dict b
+--                     on a.partner = b.id_partner
+--                 ) a
+--                     where rn_user = 1
+--         ) y
+-- group by is_trial , name_partner
+-- первые покупки для каждого клиента
+
+-- select    count (*) as cnt
+--         , is_trial
+--         , name_partner
+--         , rn_user
+-- from    (select a.*
+--              , name_partner
+--              , row_number() over (order by date_purchase asc) as rn_all
+--              , row_number() over (partition by user_id order by date_purchase asc) as rn_user
+
+--         from skycinema.client_sign_up a
+--             left join skycinema.partner_dict b
+--             on a.partner = b.id_partner
+--         ) a
+-- group by is_trial 
+--         , name_partner
+--         , rn_user
+-- с распределением количества покупок по полям is_trial и name_partner
+
+
+select  a.*
+      , cnt_2 / cnt_1 as r_2
+      , cnt_3 / cnt_1 as r_3
+      , cnt_4 / cnt_1 as r_4
+      , cnt_5 / cnt_1 as r_5
+      , cnt_6 / cnt_1 as r_6
+from        (select  name_partner
+              , sum(case when rn_user = 1 then 1 else 0 end)::float as cnt_1
+              , sum(case when rn_user = 2 then 1 else 0 end)::float as cnt_2
+              , sum(case when rn_user = 3 then 1 else 0 end)::float as cnt_3
+              , sum(case when rn_user = 4 then 1 else 0 end)::float as cnt_4
+              , sum(case when rn_user = 5 then 1 else 0 end)::float as cnt_5
+              , sum(case when rn_user = 6 then 1 else 0 end)::float as cnt_6
+            from    (select a.*
+                     , name_partner
+                     , row_number() over (partition by user_id order by date_purchase asc) as rn_user
+                from skycinema.client_sign_up a
+                    left join skycinema.partner_dict b
+                    on a.partner = b.id_partner
+                    ) a
+            group by name_partner
+             ) a
+            
+--винтажные доходимости, т.е. какой процент клиентов дошел до второй покупки, до третьей покупки и тд.
